@@ -9,16 +9,19 @@ import aiohttp
 import os
 
 
-
-
-
+def authenticated_stepik(browser, alert, email, password):
+    login = alert.find_element(By.ID, 'id_login_email')
+    password = alert.find_element(By.ID, 'id_login_password')
+    login.send_keys(email)
+    password.send_keys(password)
+    
 async def main(parameters):
         with Chrome() as browser:
             browser.get('https://stepik.org/catalog?auth=login')
             alert = WebDriverWait(browser, 10).until(
                  EC.presence_of_element_located((By.CLASS_NAME, 'modal-dialog-inner'))
             )
-
+            authenticated_stepik(browser, alert, parameters['EMAIL'], parameters['PASSWORD'])
 
 if __name__ == '__main__':
     load_dotenv()
