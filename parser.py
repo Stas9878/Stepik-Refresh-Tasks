@@ -5,8 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 import time
 import asyncio
-import aiohttp
 import os
+from refresh_tasks import refresh_tasks
 
 def timeout_validate(browser, class_name):
     try:
@@ -21,10 +21,10 @@ def authenticated_stepik(alert, email, password):
     try:
         add_login = alert.find_element(By.ID, 'id_login_email').send_keys(email)
         add_password = alert.find_element(By.ID, 'id_login_password').send_keys(password)
-        time.sleep(1)
         btn = alert.find_element(By.TAG_NAME, 'button').click()
-        time.sleep(2)
+        time.sleep(1)
         return True
+    
     except:
         raise Exception('Произошла ошибка авторизации, попробуйте снова')
 
@@ -42,7 +42,9 @@ async def main(parameters):
             #Переходим к целевому курсу
             browser.get(parameters['url'])
             #Ожидаем отображения тела урока
-            sidebar = timeout_validate(browser, 'lesson-modern__wrapper')
+            step_bar = timeout_validate(browser, 'player-topbar__step-pins')
+
+            await refresh_tasks(browser)
 
 if __name__ == '__main__':
     load_dotenv()
@@ -50,7 +52,7 @@ if __name__ == '__main__':
     email = os.environ.get('EMAIL')
     password = os.environ.get('PASSWORD')
 
-    url = 'https://stepik.org/lesson/1044812/step/1?unit=1053384'
+    url = 'https://stepik.org/lesson/290248/step/1?unit=271724'
 
     parameters = {
         'email': email,
