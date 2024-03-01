@@ -20,17 +20,29 @@ def timeout_validate(browser, class_name):
         raise Exception('Произошла ошибка поиска элемента, попробуйте увеличить timeout')
 
 def authenticated_stepik(alert, email, password):
+    print('Вход в аккаунт с указанными учётными данными..')
     try:
+        #Ищем поле для ввода почты
         add_login = alert.find_element(By.ID, 'id_login_email').send_keys(email)
+
+        #Ищем поле для ввода пароля
         add_password = alert.find_element(By.ID, 'id_login_password').send_keys(password)
+
+        #Ищем кнопку для отправки формы и кликаем
         btn = alert.find_element(By.TAG_NAME, 'button').click()
+
         time.sleep(1)
+        
+        print('Вход выполнен успешно')
+        print('_______________________\n')
         return True
     
     except:
         raise Exception('Произошла ошибка авторизации, попробуйте снова')
 
 async def main(parameters):
+        print('\nНачинаем обход курса..')
+        print('_______________________\n')
         with Chrome() as browser:
             browser.get('https://stepik.org/catalog?auth=login')
             #Ожидаем отображения модального окна авторизации
@@ -76,17 +88,24 @@ async def main(parameters):
                     print()
 
                     counter_tasks += num_of_refresh
-
+            print('_______________________\n')
+            print('Сброс заданий окончен')
             print(f'Всего сброшено заданий {counter_tasks}')
                     
                     
 if __name__ == '__main__':
     load_dotenv()
-
+    
     email = os.environ.get('EMAIL')
     password = os.environ.get('PASSWORD')
 
-    course = get_sections_api(58852)
+    try:
+        course = get_sections_api(int(input('\nВведите ID курса: \n')))
+
+    except KeyError:
+        print('_______________________\n')
+        print('Указанного курса не сущесвует или он скрыт')
+        exit()
 
     parameters = {
         'email': email,
