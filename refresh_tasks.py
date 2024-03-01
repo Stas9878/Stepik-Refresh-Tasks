@@ -16,17 +16,21 @@ async def refresh_tasks(browser):
             step.click()
 
             time.sleep(2)
-
+            
+            #Ждём когда появится блок с кнопкой
             div_btn = WebDriverWait(browser, timeout=10).until(
                     EC.presence_of_element_located((By.CLASS_NAME, 'attempt__actions'))
             )
+            
+            #Нажимаем на кнопку сброса задания
             div_btn.find_element(By.TAG_NAME, 'button').click()
 
             time.sleep(1)
             #Текущая страница
-            print(browser.current_url)
+            print(browser.current_url, 'Задание сброшено')
 
         except:
+            print(browser.current_url, 'Это теория, или не выполненное задание')
             #Если на уроке теории, или нет кнопки 'Решить снова' то пропускаем степ
             continue
             

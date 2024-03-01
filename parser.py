@@ -49,10 +49,10 @@ async def main(parameters):
 if __name__ == '__main__':
     load_dotenv()
 
+    url = 'https://stepik.org/lesson/290248/step/1?unit=271724'
+
     email = os.environ.get('EMAIL')
     password = os.environ.get('PASSWORD')
-
-    url = 'https://stepik.org/lesson/290248/step/1?unit=271724'
 
     parameters = {
         'email': email,
