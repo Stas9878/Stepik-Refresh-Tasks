@@ -3,14 +3,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+from refresh_tasks import refresh_tasks
+from api import get_sections_api
 import time
 import asyncio
 import os
-from refresh_tasks import refresh_tasks
+
 
 def timeout_validate(browser, class_name):
     try:
-        result = WebDriverWait(browser, timeout=10).until(
+        result = WebDriverWait(browser, timeout=15).until(
                     EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
         return result
@@ -33,31 +35,50 @@ async def main(parameters):
             browser.get('https://stepik.org/catalog?auth=login')
             #Ожидаем отображения модального окна авторизации
             alert = timeout_validate(browser, 'modal-dialog-inner')
-
+            
             #Входим в свою учётную запись
             auth = authenticated_stepik(alert, 
                                  parameters['email'], 
                                  parameters['password'])
             
-            #Переходим к целевому курсу
-            browser.get(parameters['url'])
-            #Ожидаем отображения тела урока
-            step_bar = timeout_validate(browser, 'player-topbar__step-pins')
+            #Достаём объект курса (словарь)
+            course = await parameters['course']
+            #Достаём все section
+            dict_course = [i for i in course['sections']]
 
-            await refresh_tasks(browser)
+            counter_tasks = 0            
+            for d in dict_course:
+                #Достаём название текущей section
+                section = [key for key in d.keys()][0]
+                print(f'Секция - {section[0]} ({section})')
 
+                #Достаём все ссылки на step'ы в конкретной section
+                lessons_url = d[section]['lessons_url']
+                for num, url in enumerate(lessons_url, 1):
+                    #Переходим к целевому уроку
+                    browser.get(url)
+                    #Ожидаем отображения тела урока
+                    step_bar = timeout_validate(browser, 'lesson__player')
+
+                    print(f'\tУрок #{num}')
+                    #Ожидаем сброс заданий на этом уроке
+                    counter_tasks += await refresh_tasks(browser)
+
+            print(f'Всего сброшено заданий {counter_tasks}')
+                    
+                    
 if __name__ == '__main__':
     load_dotenv()
-
-    url = 'https://stepik.org/lesson/290248/step/1?unit=271724'
 
     email = os.environ.get('EMAIL')
     password = os.environ.get('PASSWORD')
 
+    course = get_sections_api(58852)
+
     parameters = {
         'email': email,
         'password': password,
-        'url': url,
+        'course': course,
     }
         
     asyncio.run(main(parameters))
