@@ -1,3 +1,4 @@
+from writer_urls import writer_urls
 import aiohttp
 import asyncio
 
@@ -21,9 +22,9 @@ async def get_units_api(session, section, section_id):
         #Выполняем задачи и возвращаем словарь
         return {f'{section_id}_section_{section}': {'lessons_url': await asyncio.gather(*tasks)}}
 
-async def get_sections_api(cource_id):
+async def get_sections_api(course_id):
     async with aiohttp.ClientSession() as session:
-        async with session.get(f'https://stepik.org/api/courses/{cource_id}') as response:
+        async with session.get(f'https://stepik.org/api/courses/{course_id}') as response:
             #Получаем json с данными о курсе
             info_cource_json = await response.json()
             #Находим все секции курса
@@ -31,11 +32,11 @@ async def get_sections_api(cource_id):
             #Создаём задачи для обхода каждой section
             tasks = [asyncio.create_task(get_units_api(session, section, section_id)) for section_id, section  in enumerate(sections, 1)]
             #Выполняем задачи и возвращаем словарь
-            urls = {'cource_id': cource_id,
+            course = {'cource_id': course_id,
                     'sections': await asyncio.gather(*tasks)}
 
             #Запись всех ссылок курса в файл (по желанию)
-            print(urls)
+            await writer_urls(course, course_id)
             
 
 asyncio.run(get_sections_api(58852))
