@@ -3,20 +3,23 @@ import asyncio
 
 async def get_lessons_api(session, unit):
     async with session.get(f'https://stepik.org/api/units/{unit}') as response:
+        #Получаем json с данными о unit
         info_unit_json = await response.json()
+        #Узнаём какой lesson привязан к конкретному unit
         lesson = info_unit_json['units'][0]['lesson']
+        #Возвращаем ссылку на урок, чтобы обойти его в файле parser.py
         return f'https://stepik.org/lesson/{lesson}/step/1'
 
-async def get_units_api(session, section):
+async def get_units_api(session, section, section_id):
     async with session.get(f'https://stepik.org/api/sections/{section}') as response:
-        #Получаем json с данными о секции
+        #Получаем json с данными о section
         info_section_json = await response.json()
         #Находим все юниты курса
         units = info_section_json['sections'][0]['units']
-        #Создаём задачи для обхода каждого юнита
+        #Создаём задачи для обхода каждого unit
         tasks = [asyncio.create_task(get_lessons_api(session, unit)) for unit in units]
-        #Выполняем задачи
-        return await asyncio.gather(*tasks)
+        #Выполняем задачи и возвращаем словарь
+        return {f'{section_id}_section_{section}': {'lessons_url': await asyncio.gather(*tasks)}}
 
 async def get_sections_api(cource_id):
     async with aiohttp.ClientSession() as session:
@@ -25,12 +28,13 @@ async def get_sections_api(cource_id):
             info_cource_json = await response.json()
             #Находим все секции курса
             sections = info_cource_json['courses'][0]['sections']
-            #Создаём задачи для обхода каждой секции
-            tasks = [asyncio.create_task(get_units_api(session, section)) for section in sections]
-            #Выполняем задачи
-            urls = await asyncio.gather(*tasks)
+            #Создаём задачи для обхода каждой section
+            tasks = [asyncio.create_task(get_units_api(session, section, section_id)) for section_id, section  in enumerate(sections, 1)]
+            #Выполняем задачи и возвращаем словарь
+            urls = {'cource_id': cource_id,
+                    'sections': await asyncio.gather(*tasks)}
 
-            #Запись всех ссылок курс в файл (по желанию)
+            #Запись всех ссылок курса в файл (по желанию)
             print(urls)
             
 
