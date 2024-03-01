@@ -12,8 +12,10 @@ async def refresh_tasks(browser):
     steps_a = browser.find_element(By.CLASS_NAME, 'player-topbar__step-pins').find_elements(By.CSS_SELECTOR, '.m-step-pin[data-is-passed]')
 
     #Обход всех степов
-    for num, step in enumerate(steps_a, 1):
-        print(f'\t\tШаг #{num}', end=' - ')
+    for step in steps_a:
+        #Номер step'а
+        num_step = step.get_attribute('data-step-position')
+
         try:
             #Пробуем получить svg степа, если есть,то мы на уроке практики
             svg = step.find_element(By.TAG_NAME, 'svg')
@@ -23,8 +25,10 @@ async def refresh_tasks(browser):
 
             time.sleep(2) #Иногда может потребоваться увеличение времени сна
             
+            print(f'\t\tШаг #{num_step}', end=' - ')
+
             #Ждём когда появится блок с кнопкой
-            div_btn = WebDriverWait(browser, timeout=10).until(
+            div_btn = WebDriverWait(browser, timeout=15).until(
                     EC.presence_of_element_located((By.CLASS_NAME, 'attempt__actions'))
             )
         
@@ -43,28 +47,21 @@ async def refresh_tasks(browser):
                 alert_btn = alert.find_element(By.TAG_NAME, 'button').click()
 
             except NoSuchElementException as err:
-                #Если при сбросе задание не появляется модальное окно
-                pass    
-                   
+                #Если при сбросе задания не появляется модальное окно
+                pass
+
+            #Текущая страница
+            print('Задание сброшено')   
             time.sleep(1)
             count_refresh += 1
-            #Текущая страница
-            print('Задание сброшено')
 
         except NoSuchElementException as err:
-            #Если на уроке теории, или нет кнопки 'Решить снова' то пропускаем степ
-            if 'svg' in err.msg:
-                print('Это теория')
-            else:
-                print('Это невыполненное задание')
-            
+            #Если нет кнопки 'Решить снова' то пропускаем степ
+
+            #Если ошибка произошла не из-за того, что это шаг с теорией, значит это практика
+            if 'svg' not in err.msg:
+                    print('Задание не выполнено')
             continue
 
-    if not steps_a:
-        print(f'\t\tНет пройденных шагов в данном уроке')
-
-    #Отступ от предыдущей секции
-    print()
-    
     #Возвращаем число шагов в уроке
     return count_refresh

@@ -35,7 +35,7 @@ async def main(parameters):
             browser.get('https://stepik.org/catalog?auth=login')
             #Ожидаем отображения модального окна авторизации
             alert = timeout_validate(browser, 'modal-dialog-inner')
-            
+
             #Входим в свою учётную запись
             auth = authenticated_stepik(alert, 
                                  parameters['email'], 
@@ -50,8 +50,11 @@ async def main(parameters):
             for d in dict_course:
                 #Достаём название текущей section
                 section = [key for key in d.keys()][0]
-                print(f'Секция - {section[0]} ({section})')
 
+                #Индекс - '_', чтобы сделать нужный срез числа
+                index = section.index('_')
+                print(f'Секция - {section[:index]} ({section})')
+            
                 #Достаём все ссылки на step'ы в конкретной section
                 lessons_url = d[section]['lessons_url']
                 for num, url in enumerate(lessons_url, 1):
@@ -61,8 +64,18 @@ async def main(parameters):
                     step_bar = timeout_validate(browser, 'lesson__player')
 
                     print(f'\tУрок #{num}')
+
                     #Ожидаем сброс заданий на этом уроке
-                    counter_tasks += await refresh_tasks(browser)
+                    num_of_refresh = await refresh_tasks(browser)
+                    if num_of_refresh == 0:
+                        print(f'\t\tНет заданий для сброса')
+                    else:
+                        print(f'\t\tСброшено заданий в этом уроке - {num_of_refresh}')
+                    
+                    #Отступ от предыдущей секции
+                    print()
+
+                    counter_tasks += num_of_refresh
 
             print(f'Всего сброшено заданий {counter_tasks}')
                     
